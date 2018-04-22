@@ -3,7 +3,7 @@ title: "Homework 7"
 subtitle: "Statistical Inference II"
 author: "Noah Johnson"
 date: "April 19, 2018"
-output: pdf_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -11,6 +11,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(install.load)
 install_load('tidyverse')
+install_load('broom')
+install_load('ggplot2')
+install_load('lme4')
 ```
 
 In this homework, the data based on a sample of n = 176 chidren within J = 10 schools in the American subsample of the PISA (Programme for International Student Assessment) and is available in PISASchools10.sav. It has intentionally been provided in an .sav format so you will have to find the function to read a .sav file.
@@ -24,11 +27,44 @@ First, we will look at the relationship between student’s home education resou
 *ACADPRES*    scaled from 1 to 8; lower values indicate low press for academic excellence
 
 1. Use the *sav* data file to run separate multiple regression models for each of the 10 schools (X = *hedres*; Y = *mathscor*). Review the separate regression results for each of the schools. What do you notice about the results (look at the correlations between *mathscor* and *hedres*, and the regression coefficients for each of the 10 schools)? Is it reasonable to assume that the effect of home resources on math achievement is the same in all 10 schools? Why or why not? What does your answer imply regarding how to include the *hedres* variable within our HLM?
-  
+
+```{r}
+# Read in data
+data <- read_sav('PISASchools10.sav')
+
+# Compute 10 different linear models
+lms <- data %>% 
+  group_by(schoolid) %>% 
+  do(fit = lm(data = ., formula = mathscor ~ hedres), correlation = cor(.$mathscor, .$hedres)) %>% 
+  mutate(correlation = unlist(correlation))
+
+# Look at correlations
+lms %>% select(schoolid, correlation) %>% ggplot(aes(x=factor(schoolid), y = correlation)) +
+  geom_bar(stat = 'identity') +
+  labs(x = 'School ID', y = 'Correlation', title = 'Correlations between mathscor and hedres')
+```
+
+**Schools 99143 and 99226 have a negative relationship between mathscor and hedres, while the other schools have a positive relationship.**
+
+```{r}
+# Look at regression coefficients
+tidy(lms, fit)
+```
+
+**Here we see the same split, with two models having a negative slope. Clearly the effect of home resources on math achievement is NOT the same in all 10 schools. Thus Hedres should be included as a Level 1 effect within our HLM.**
+
 2. MODEL 1: Using lme4 fit an unconditional random-effects ANOVA (i.e., *empty model*) with *mathscor* as the outcome. Report and interpret all the parameters as well as the ICC.
+
+```{r}
+lme4 <- 
+```
   
 3. MODEL 2: Run a *random coefficients model* with *hedres* (**group-mean centered**) as the predictor of math achievement. Report and interpret all the parameters. **Compared to Model 1**, how much was the within-schools variability ($s^2$) reduced with the addition of the group-centered home resources variable?
-  
+
+```{r}
+
+```
+
 4. Based on your results for step 3, would it make sense to eliminate the random effect for the home-resources slope ($u_1$)? Why or why not?  Justify your decision.
   
 5. MODEL 3: Finally, run a *contextual or conditional model*, and add the school academic press (**centered at the grand-mean**) as a level-2 predictor of both the level-1 intercepts and the home-resources slopes. Report and interpret all the parameters. **Compared to Model 2**, was the variability in the intercepts between schools reduced with the addition of the academic press variable? What was the proportion reduction in this variance? What about the variability in home-resources slopes?  Compared to Model 2, what proportion of this variance was accounted for by academic press? 

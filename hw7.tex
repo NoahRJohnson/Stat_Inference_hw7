@@ -1,0 +1,150 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={Homework 7},
+            pdfauthor={Noah Johnson},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+  \title{Homework 7}
+  \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+\subtitle{Statistical Inference II}
+  \author{Noah Johnson}
+  \preauthor{\centering\large\emph}
+  \postauthor{\par}
+  \predate{\centering\large\emph}
+  \postdate{\par}
+  \date{April 19, 2018}
+
+
+\begin{document}
+\maketitle
+
+In this homework, the data based on a sample of n = 176 chidren within J
+= 10 schools in the American subsample of the PISA (Programme for
+International Student Assessment) and is available in PISASchools10.sav.
+It has intentionally been provided in an .sav format so you will have to
+find the function to read a .sav file.
+
+First, we will look at the relationship between student's home education
+resources (HEDRES) on math achievement scores (MATHSCOR) across these 10
+schools. Then, we will examine whether the schools' press for academic
+excellence (ACADPRES) moderates this relationship. Read each question
+carefully, as there are multiple parts to most questions.
+
+\emph{HEDRES} scaled from 1 to 8; lower values indicate poor home
+resources for education
+
+\emph{MATHSCOR} average of 50; SD of 9 points
+
+\emph{ACADPRES} scaled from 1 to 8; lower values indicate low press for
+academic excellence
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Use the \emph{sav} data file to run separate multiple regression
+  models for each of the 10 schools (X = \emph{hedres}; Y =
+  \emph{mathscor}). Review the separate regression results for each of
+  the schools. What do you notice about the results (look at the
+  correlations between \emph{mathscor} and \emph{hedres}, and the
+  regression coefficients for each of the 10 schools)? Is it reasonable
+  to assume that the effect of home resources on math achievement is the
+  same in all 10 schools? Why or why not? What does your answer imply
+  regarding how to include the \emph{hedres} variable within our HLM?
+\item
+  MODEL 1: Using lme4 fit an unconditional random-effects ANOVA (i.e.,
+  \emph{empty model}) with \emph{mathscor} as the outcome. Report and
+  interpret all the parameters as well as the ICC.
+\item
+  MODEL 2: Run a \emph{random coefficients model} with \emph{hedres}
+  (\textbf{group-mean centered}) as the predictor of math achievement.
+  Report and interpret all the parameters. \textbf{Compared to Model 1},
+  how much was the within-schools variability (\(s^2\)) reduced with the
+  addition of the group-centered home resources variable?
+\item
+  Based on your results for step 3, would it make sense to eliminate the
+  random effect for the home-resources slope (\(u_1\))? Why or why not?
+  Justify your decision.
+\item
+  MODEL 3: Finally, run a \emph{contextual or conditional model}, and
+  add the school academic press (\textbf{centered at the grand-mean}) as
+  a level-2 predictor of both the level-1 intercepts and the
+  home-resources slopes. Report and interpret all the parameters.
+  \textbf{Compared to Model 2}, was the variability in the intercepts
+  between schools reduced with the addition of the academic press
+  variable? What was the proportion reduction in this variance? What
+  about the variability in home-resources slopes? Compared to Model 2,
+  what proportion of this variance was accounted for by academic press?
+\end{enumerate}
+
+
+\end{document}
