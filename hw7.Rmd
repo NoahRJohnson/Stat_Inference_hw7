@@ -3,7 +3,7 @@ title: "Homework 7"
 subtitle: "Statistical Inference II"
 author: "Noah Johnson"
 date: "April 19, 2018"
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(install.load)
 install_load('tidyverse')
+install_load('haven')
 install_load('broom')
 install_load('ggplot2')
 install_load('lme4')
@@ -56,29 +57,95 @@ tidy(lms, fit)
 2. MODEL 1: Using lme4 fit an unconditional random-effects ANOVA (i.e., *empty model*) with *mathscor* as the outcome. Report and interpret all the parameters as well as the ICC.
 
 ```{r}
-lme4 <- 
+model.empty <- lmer(mathscor ~ 1 + (1|schoolid), data = data)
+model.empty.sum <- summary(model.empty)
+model.empty.sum
 ```
-  
+
+$mathscor_{ij} = \beta_{0j} + r_{ij}$
+
+$\beta_{0j} = \gamma_{00} + u_{0j}$
+
+$\gamma_{00} = `r model.empty.sum$coefficients[1]`$ is the estimated grand mean math score.
+
+$var(r_{ij}) = 58.19 = s^2$ is the within-group variance.
+
+$var(u_{0j}) = 27.13$ is the between-group variance.
+
+$ICC = \frac{27.13}{27.13 + 58.19} = `r (27.13)/(27.13 + 58.19)`$ is the intraclass correlation coefficient. Since it is not zero, some variance in mathscor is accounted for by schoolid.
+
 3. MODEL 2: Run a *random coefficients model* with *hedres* (**group-mean centered**) as the predictor of math achievement. Report and interpret all the parameters. **Compared to Model 1**, how much was the within-schools variability ($s^2$) reduced with the addition of the group-centered home resources variable?
 
 ```{r}
+school_group_means <- data %>%
+  group_by(schoolid) %>%
+  summarize(gpm_hedres = mean(hedres))
 
+data <- merge(data, school_group_means, by = "schoolid")
+data$hedres.group.mean.cen <- data$hedres - data$gpm_hedres
+
+model2 <- lmer(mathscor ~ hedres.group.mean.cen + (hedres.group.mean.cen|schoolid), 
+               data = data)
+model2.sum <- summary(model2)
+model2.sum
 ```
 
-4. Based on your results for step 3, would it make sense to eliminate the random effect for the home-resources slope ($u_1$)? Why or why not?  Justify your decision.
+$mathscor_{ij} = \beta_{0j} + \beta_{1j}*(hedres_{ij} - \bar{hedres}_{j}) + r_{ij}$
+
+$\beta_{0j} = \gamma_{00} + u_{0j}$
+
+$\beta_{1j} = \gamma_{10} + u_{1j}$
+
+$\gamma_{00} = `r model2.sum$coefficients[1,1]`$ is the estimated grand mean math score.
+
+$\gamma_{10} = `r model2.sum$coefficients[2,1]`$ is the average effect of hedres on math score.
+
+$var(r_{ij}) = 40.391 = s^2$ is the within-group variance.
+
+$var(u_{0j}) = 28.11$ is the between-group variance of the intercept $\beta_{0j}$.
+
+$var(u_{1j}) = 9.1$ is the between-group variance of the slope $\beta_{1j}$.
+
+Compared to Model 1, $s^2$ was reduced by `r round(100*(58.19 - 40.391) / 58.19)`%.
+
+4. Based on your results for step 3, would it make sense to eliminate the random effect for the home-resources slope ($u_{1j}$)? Why or why not?  Justify your decision.
+
+If we're eliminating the random effect then we're saying that the slope of the hedres effect has the same variance across all schools. The between-group variance of the slope was estimated to be 9.1, with a 3.017 variance. This would pass a standard significance test, so we should not eliminate the random effect.
   
-5. MODEL 3: Finally, run a *contextual or conditional model*, and add the school academic press (**centered at the grand-mean**) as a level-2 predictor of both the level-1 intercepts and the home-resources slopes. Report and interpret all the parameters. **Compared to Model 2**, was the variability in the intercepts between schools reduced with the addition of the academic press variable? What was the proportion reduction in this variance? What about the variability in home-resources slopes?  Compared to Model 2, what proportion of this variance was accounted for by academic press? 
+5. MODEL 3: Finally, run a *contextual or conditional model*, and add the school academic press (**centered at the grand-mean**) as a level-2 predictor of both the level-1 intercepts and the home-resources slopes. Report and interpret all the parameters. **Compared to Model 2**, was the variability in the intercepts between schools reduced with the addition of the academic press variable? What was the proportion reduction in this variance? What about the variability in home-resources slopes? Compared to Model 2, what proportion of this variance was accounted for by academic press?
 
+```{r}
+acadpres_grand_mean <- data %>%
+  summarize(acadpres.grand.mean = mean(acadpres))
 
+data$acadpres.grand.mean.cen <- data$acadpres - acadpres_grand_mean$acadpres.grand.mean
 
- 
+model3 <- lmer(mathscor ~ hedres.group.mean.cen * acadpres.grand.mean.cen +
+                 (hedres.group.mean.cen|schoolid), data = data)
+model3.sum <- summary(model3)
+model3.sum
+```
 
+$mathscor_{ij} = \beta_{0j} + \beta_{1j}*(hedres_{ij} - \bar{hedres}_{j}) + r_{ij}$
 
- 
+$\beta_{0j} = \gamma_{00} + \gamma_{01} * (acadpres_j - \bar{acadpres}) + u_{0j}$
 
+$\beta_{1j} = \gamma_{10} + \gamma_{11} * (acadpres_j - \bar{acadpres}) + u_{1j}$
 
- 
+$\gamma_{00} = `r model3.sum$coefficients[1,1]`$ is the estimated grand mean math score.
 
+$\gamma_{10} = `r model3.sum$coefficients[2,1]`$ is the average effect of hedres on math score.
 
- 
+$\gamma_{01} = `r model3.sum$coefficients[3,1]`$ is the average effect of acadpres on math score.
 
+$\gamma_{11} = `r model3.sum$coefficients[4,1]`$ is the average effect of acadpres on the average effect of hedres on math score, i.e. the effect of acadpres on the slope.
+
+$var(r_{ij}) = 40.366 = s^2$ is the within-group variance.
+
+$var(u_{0j}) = 3.00$ is the between-group variance of the intercept $\beta_{0j}$.
+
+$var(u_{1j}) = 9.27$ is the between-group variance of the slope $\beta_{1j}$.
+
+Compared to Model 2, the variability in the intercepts between schools was reduced by `r round(100*(28.11 - 3.00) / 28.11)`%.
+
+Compared to Model 2, the variability in home-resources slopes between schools increased by `r round(100 * -(9.1 - 9.27) / 9.1)`%.
